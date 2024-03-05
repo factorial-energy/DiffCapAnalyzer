@@ -26,7 +26,6 @@ from diffcapanalyzer.descriptors import generate_model
 from diffcapanalyzer.descriptors import get_model_dfs
 
 
-
 database = "data/databases/dQdV.db"
 init_db = "data/databases/init_database.db"
 
@@ -272,6 +271,7 @@ def update_output(contents, filename, value):
     except Exception as e:
         return html.Div(['There was a problem uploading that file: ' + str(e)])
     # return children
+
 
 @app.callback(Output('available-data', 'options'),
               [Input('output-data-upload', 'children')])
@@ -581,6 +581,7 @@ def update_figure2(
     }
     return fig
 
+
 @app.callback(Output('my-link-1', 'href'),
               [Input('available-data', 'value')])
 def update_link_1(value):
@@ -588,8 +589,9 @@ def update_link_1(value):
         peak_vals_df = get_file_from_database(
             value.split('.')[0] + '-descriptors', database)
         if peak_vals_df is not None:
-            # only need a subsest of the columns: 
-            cols_to_keep = [col for col in peak_vals_df if col.startswith('sorted')]
+            # only need a subsest of the columns:
+            cols_to_keep = [
+                col for col in peak_vals_df if col.startswith('sorted')]
             baseline = [col for col in peak_vals_df if 'gauss' in col]
             cols_to_keep.extend(baseline)
             cols_to_keep.extend(['d_cycle_number', 'c_cycle_number'])
@@ -601,6 +603,7 @@ def update_link_1(value):
         csv_string = "data:text/csv;charset=utf-8," + \
             urllib.parse.quote(csv_string)
         return csv_string
+
 
 @app.callback(Output('my-link-2', 'href'),
               [Input('available-data', 'value')])
