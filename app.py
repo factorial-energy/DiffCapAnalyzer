@@ -63,7 +63,49 @@ app.layout = html.Div(
             [
                 html.Div(
                     [
-                        html.H5("Load in your own data: "),
+                        html.H5("Choose existing data: "),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.H6(
+                                            "Here are the files currently available in the database: "
+                                        )
+                                    ],
+                                    style={
+                                        "width": "90%",
+                                        "textAlign": "left",
+                                        "margin-left": "50px",
+                                    },
+                                ),
+                                html.Div(
+                                    [
+                                        dcc.Dropdown(
+                                            id="available-data",
+                                            options=[
+                                                {"label": "options", "value": "options"}
+                                            ],
+                                        )
+                                    ],
+                                    style={
+                                        "width": "80%",
+                                        "vertical-align": "center",
+                                        "margin-left": "50px",
+                                    },
+                                ),
+                                html.Div(id="gen-desc-confirmation"),
+                            ]
+                        ),
+                    ],
+                    style={
+                        "width": "43%",
+                        "display": "inline-block",
+                        "vertical-align": "top",
+                    },
+                ),
+                html.Div(
+                    [
+                        html.H5("Or load in your own data: "),
                         html.Div(
                             [
                                 html.Div(
@@ -82,6 +124,10 @@ app.layout = html.Div(
                                             options=[
                                                 {"label": "Arbin", "value": "ARBIN"},
                                                 {"label": "MACCOR", "value": "MACCOR"},
+                                                {
+                                                    "label": "FE-Neware",
+                                                    "value": "FE-Neware",
+                                                },
                                             ],
                                             placeholder="datatype",
                                         )
@@ -419,6 +465,14 @@ def update_output(contents, filename, value):
     except Exception as e:
         return html.Div(["There was a problem uploading that file: " + str(e)])
     # return children
+
+
+@app.callback(
+    Output("available-data", "options"), [Input("output-data-upload", "children")]
+)
+def update_dropdown(children):
+    options = [{"label": i, "value": i} for i in get_db_filenames(database)]
+    return options
 
 
 @app.callback(
