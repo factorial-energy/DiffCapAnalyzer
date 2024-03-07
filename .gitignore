@@ -9,3 +9,4 @@ pyvenv.cfg
 dist/**
 
 include/**
+build/**
