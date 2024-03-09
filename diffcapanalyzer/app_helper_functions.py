@@ -16,7 +16,7 @@ import urllib
 import urllib.parse
 
 from diffcapanalyzer.databasewrappers import get_filename_pref
-from diffcapanalyzer.databasewrappers import if_file_exists_in_db
+from diffcapanalyzer.databasewrappers import is_file_exists_in_db
 from diffcapanalyzer.databasewrappers import process_data
 from diffcapanalyzer.databasewrappers import macc_chardis
 from diffcapanalyzer.databasefuncs import init_master_table
@@ -25,7 +25,14 @@ from diffcapanalyzer.chachifuncs import col_variables
 from diffcapanalyzer.descriptors import generate_model
 
 
-def parse_contents(decoded, filename, datatype, database, windowlength=9, polyorder=3):
+def parse_contents(
+    binary_data: bytes,
+    filename: str,
+    datatype: str,
+    database,
+    windowlength=9,
+    polyorder=3,
+):
     """Checks if the uploaded file exists in the database yet. Will
     process and add that file to the database if it doesn't appear in
     the master table yet. Otherwise will return html.Div that the
@@ -35,15 +42,15 @@ def parse_contents(decoded, filename, datatype, database, windowlength=9, polyor
     # this gets rid of any filepath in the filename and just leaves the
     # clean set name as it appears in the database check to see if the
     # database exists, and if it does, check if the file exists.
-    ans_p = if_file_exists_in_db(database, filename)
-    if ans_p:
+    file_exists_in_db = is_file_exists_in_db(database, filename)
+    if file_exists_in_db:
         df_clean = get_file_from_database(cleanset_name, database)
         new_peak_thresh = 0.7
         feedback = generate_model(df_clean, filename, new_peak_thresh, database)
         return "That file exists in the database: " + str(get_filename_pref(filename))
     else:
         try:
-            decoded_dataframe = decoded_to_dataframe(decoded, datatype, filename)
+            decoded_dataframe = decoded_to_dataframe(binary_data, datatype, filename)
             print("decoded")
             process_data(
                 filename, database, decoded_dataframe, datatype, windowlength, polyorder
@@ -63,24 +70,25 @@ def parse_contents(decoded, filename, datatype, database, windowlength=9, polyor
             )
 
 
-def decoded_to_dataframe(decoded, datatype, file_name):
+def decoded_to_dataframe(binary_data: bytes, datatype: str, file_name: str):
     """Decodes the contents uploaded via the app. Returns
     contents as a dataframe. Accepts only csv files for
     both Arbin and MACCOR type data."""
-    if decoded is None:
+    if binary_data is None:
         try:
             data1 = pd.read_csv(file_name, index_col=False)
         except BaseException:
             data1 = pd.read_csv(file_name, delimiter="\t", index_col=False)
     else:
         try:
-            contents = io.StringIO(decoded.decode("utf-8"))
+            contents = io.StringIO(binary_data.decode("utf-8"))
         except BaseException:
-            contents = io.StringIO(decoded.decode("utf-16"))
+            contents = io.StringIO(binary_data.decode("utf-16"))
         try:
             data1 = pd.read_csv(contents, index_col=False)
         except BaseException:
             data1 = pd.read_csv(contents, delimiter="\t", index_col=False)
+
     if datatype == "ARBIN":
         data1["datatype"] = "ARBIN"
         expected_cols = [
@@ -111,14 +119,8 @@ def decoded_to_dataframe(decoded, datatype, file_name):
 
     elif datatype == "FE-Neware":
         data1["datatype"] = "FE-Neware"
-        expected_cols = [
-            "ExternalCycleNumber",
-            "Voltage",
-            "Amperage",
-            "Capacity",
-            "State",
-        ]
-        map_to = ["Cycle_Index", "Voltage(V)", "Abs_Current(A)", "Cap(Ah)", "State"]
+        expected_cols = []  # Empty for now
+        map_to = []
         assert all(item in list(data1.columns) for item in expected_cols)
         data1.rename(
             columns={item[0]: item[1] for item in zip(expected_cols, map_to)},
@@ -132,14 +134,14 @@ def decoded_to_dataframe(decoded, datatype, file_name):
     return data1
 
 
-def pop_with_db(filename, database):
+def pop_with_db(filename: str, database):
     """Returns dataframes that can be used to populate the app graphs.
     Finds the already existing file in the database and returns
     the cleaned version (as a dataframe) and the raw version
     (also as a dataframe)."""
     cleanset_name = get_filename_pref(filename) + "CleanSet"
     rawset_name = get_filename_pref(filename) + "Raw"
-    if if_file_exists_in_db(database, filename):
+    if is_file_exists_in_db(database, filename):
         # then the file exists in the database and we can just read it
         df_clean = get_file_from_database(cleanset_name, database)
         df_raw = get_file_from_database(rawset_name, database)

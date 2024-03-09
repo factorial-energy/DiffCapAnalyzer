@@ -53,16 +53,26 @@ def get_clean_cycles(
     ) = col_variables(datatype)
 
     clean_cycle_dict = {}
-    for i in range(1, len(cycle_dict) + 1):
+    for i in sorted(list(cycle_dict.keys())):
+        print(i, len(cycle_dict))
+        print(i, cycle_dict.keys())
         charge, discharge = clean_calc_sep_smooth(
             cycle_dict[i], datatype, windowlength, polyorder
         )
+        print(i, "calc")
         clean_data = charge.append(discharge, ignore_index=True)
+        print(i, "clean")
         clean_data = clean_data.sort_values([data_point_col], ascending=True)
+        print(i, "sort")
         clean_data = clean_data.reset_index(drop=True)
+        print(i, "reset")
         cyclename = core_file_name + "-CleanCycle" + str(i)
+        print(i, "name")
         clean_cycle_dict.update({cyclename: clean_data})
+        print(i, "dict update")
         update_database_newtable(clean_data, cyclename, database_name)
+        print(i, "update datatable")
+        print(i, len(cycle_dict))
     return clean_cycle_dict
 
 
@@ -87,20 +97,30 @@ def clean_calc_sep_smooth(dataframe, datatype, windowlength, polyorder):
     separates out charge and discharge, and applies sav-golay filter.
     Returns two dataframes, one charge and one discharge.
     Windowlength and polyorder are for the sav-golay filter."""
+    print("clean_calc_sep_smooth", type(dataframe))
     assert isinstance(dataframe, pd.DataFrame)
+    print("clean_calc_sep_smooth", "assert")
     df = init_columns(dataframe, datatype)
+    print("clean_calc_sep_smooth", "init columns")
     df1 = calc_dq_dqdv(df, datatype)
+    print("clean_calc_sep_smooth", "calc dqdv")
     cleandf2 = drop_inf_nan_dqdv(df1, datatype)
+    print("clean_calc_sep_smooth", "drop inf nan")
     charge, discharge = sep_char_dis(cleandf2, datatype)
+    print("clean_calc_sep_smooth", "set_char_dis")
     # separating into charge and discharge cycles
     charge = clean_charge_discharge_separately(charge, datatype)
+    print("clean_calc_sep_smooth", "clean charge")
     discharge = clean_charge_discharge_separately(discharge, datatype)
+    print("clean_calc_sep_smooth", "clean discharge")
 
     if len(discharge) > windowlength:
         smooth_discharge = my_savgolay(discharge, windowlength, polyorder)
+        print("clean_calc_sep_smooth", "discharge my_savgolay")
     else:
         discharge["Smoothed_dQ/dV"] = discharge["dQ/dV"]
         smooth_discharge = discharge
+        print("clean_calc_sep_smooth", "discharge other")
     # this if statement is for when the datasets have less datapoints
     # than the windowlength given to the sav_golay filter.
     # without this if statement, the sav_golay filter throws an error
@@ -108,9 +128,11 @@ def clean_calc_sep_smooth(dataframe, datatype, windowlength, polyorder):
     # forego the smoothing function.
     if len(charge) > windowlength:
         smooth_charge = my_savgolay(charge, windowlength, polyorder)
+        print("clean_calc_sep_smooth", "charge my_savgolay")
     else:
         charge["Smoothed_dQ/dV"] = charge["dQ/dV"]
         smooth_charge = charge
+        print("clean_calc_sep_smooth", "charge other")
     # same as above, but for charging cycles.
     return smooth_charge, smooth_discharge
 
@@ -149,8 +171,10 @@ def calc_dq_dqdv(cycle_df, datatype):
             char_cap_col,
             charge_or_discharge,
         ) = col_variables(datatype)
+
         pd.options.mode.chained_assignment = None
         # to avoid the warning
+
         cycle_df["roundedV"] = round(cycle_df[volt_col], 3)
         cycle_df = cycle_df.drop_duplicates(
             subset=["roundedV", cycle_ind_col, charge_or_discharge]
@@ -175,10 +199,13 @@ def calc_dq_dqdv(cycle_df, datatype):
             ["dQ/dV", "dV", "Discharge_dQ"]
         ].fillna(0)
         cycle_df_discharge = cycle_df_discharge[cycle_df_discharge["dQ/dV"] <= 0]
+
+        print(cycle_df_charge.index, cycle_df_discharge.index)
+
         cycle_df = pd.concat((cycle_df_charge, cycle_df_discharge), sort=True)
         return cycle_df
     except Exception as ex:
-        print(ex)
+        print(f"ex:{ex}")
 
 
 def drop_inf_nan_dqdv(cycle_df_dv, datatype):
@@ -288,9 +315,10 @@ def my_savgolay(dataframe, windowlength, polyorder):
 
 def col_variables(datatype):
     """This function provides a key for column names of the two
-    most widely used battery data collection instruments, Arbin and
-    MACCOR"""
-    assert datatype == "ARBIN" or datatype == "MACCOR"
+    most widely used battery data collection instruments, Arbin, MACCOR, and FE-Neware
+    """
+    assert datatype == "ARBIN" or datatype == "MACCOR" or datatype == "FE-Neware"
+
     if datatype == "ARBIN":
         cycle_ind_col = "Cycle_Index"
         data_point_col = "Data_Point"
@@ -310,12 +338,12 @@ def col_variables(datatype):
         charge_or_discharge = "Md"
 
     elif datatype == "FE-Neware":
-        cycle_ind_col = "Cycle_Index"
-        data_point_col = "Rec"
-        volt_col = "Voltage(V)"
-        curr_col = "Current(A)"
-        dis_cap_col = "Cap(Ah)"
-        char_cap_col = "Cap(Ah)"
+        cycle_ind_col = "ExternalCycleNumber"
+        data_point_col = "ExternalRecordId"
+        volt_col = "Voltage"
+        curr_col = "Amperage"
+        dis_cap_col = "RawCapacityValueDischarge"
+        char_cap_col = "RawCapacityValueCharge"
         charge_or_discharge = "State"
 
     else:

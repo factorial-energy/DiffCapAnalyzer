@@ -515,7 +515,7 @@ def update_slider_max(filename):
         char_cap_col,
         charge_or_discharge,
     ) = col_variables(datatype)
-    return data["Cycle_Index"].max()
+    return data[cycle_ind_col].max()
 
 
 @app.callback(Output("cycle--slider", "marks"), [Input("available-data", "value")])
@@ -527,7 +527,17 @@ def update_slider_marks(filename):
         filename = filename
         database_sel = database
     data, raw_data = pop_with_db(filename, database_sel)
-    return {str(each): str(each) for each in data["Cycle_Index"].unique()}
+    datatype = data["datatype"].iloc[0]
+    (
+        cycle_ind_col,
+        data_point_col,
+        volt_col,
+        curr_col,
+        dis_cap_col,
+        char_cap_col,
+        charge_or_discharge,
+    ) = col_variables(datatype)
+    return {str(each): str(each) for each in data[cycle_ind_col].unique()}
 
 
 @app.callback(Output("cycle--slider", "value"), [Input("available-data", "value")])
@@ -550,7 +560,7 @@ def update_slider_value(filename):
         charge_or_discharge,
     ) = col_variables(datatype)
 
-    return data["Cycle_Index"].min()
+    return data[cycle_ind_col].min()
 
 
 @app.callback(

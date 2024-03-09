@@ -1,7 +1,7 @@
 import io
 import os
 import pandas as pd
-from pandas import ExcelWriter
+from pandas import DataFrame, ExcelWriter
 import pandas.io.sql as pd_sql
 import sqlite3 as sql
 import scipy
@@ -19,7 +19,12 @@ from diffcapanalyzer.databasefuncs import get_file_from_database
 
 
 def process_data(
-    file_name, database_name, decoded_dataframe, datatype, windowlength=9, polyorder=3
+    file_name: str,
+    database_name: str,
+    decoded_dataframe: DataFrame,
+    datatype: str,
+    windowlength=9,
+    polyorder=3,
 ):
     """Takes raw file, separates cycles, cleans cycles,
     gets the descriptors, saves descriptors for each cycle
@@ -43,7 +48,7 @@ def process_data(
         clean_cycle_dict = get_clean_cycles(
             cycle_dict, core_file_name, database_name, datatype, windowlength, polyorder
         )
-        print("cycle dict 2")
+        print("clean cycle dict")
         clean_set_df = get_clean_sets(clean_cycle_dict, core_file_name, database_name)
         print("clean set")
     return
@@ -59,10 +64,10 @@ def parse_update_master(core_file_name, database_name, datatype, decoded_datafra
         decoded_dataframe, core_file_name + "UnalteredRaw", database_name
     )
     print("database new table")
-    print(decoded_dataframe.first())
+    print(decoded_dataframe.iloc[0])
     data = calc_dq_dqdv(decoded_dataframe, datatype)
     print("database calc dqdv")
-    print(data.first())
+    print(data.iloc[0])
     update_database_newtable(data, core_file_name + "Raw", database_name)
     print("database update new table")
     update_dict = {
@@ -91,7 +96,7 @@ def macc_chardis(row):
         return 1
 
 
-def if_file_exists_in_db(database_name, file_name):
+def is_file_exists_in_db(database_name, file_name):
     """Checks if file exists in the given database
     by checking the list of table names for the
     table name corresponding to the whole CleanSet."""
@@ -118,7 +123,7 @@ def get_db_filenames(database_name):
     con.close()
     exists_list = []
     for name in names_list:
-        if if_file_exists_in_db(database_name, name):
+        if is_file_exists_in_db(database_name, name):
             exists_list.append(name)
     return exists_list
 

@@ -4,7 +4,7 @@ import pandas as pd
 from diffcapanalyzer.databasewrappers import process_data
 from diffcapanalyzer.databasewrappers import parse_update_master
 from diffcapanalyzer.databasewrappers import macc_chardis
-from diffcapanalyzer.databasewrappers import if_file_exists_in_db
+from diffcapanalyzer.databasewrappers import is_file_exists_in_db
 from diffcapanalyzer.databasewrappers import get_db_filenames
 from diffcapanalyzer.databasewrappers import get_filename_pref
 from diffcapanalyzer.databasewrappers import get_table_names
@@ -67,19 +67,19 @@ def test_macc_chardis():
     return
 
 
-def test_if_file_exists_in_db():
-    """Tests the if_file_exists_in_db function gives the
+def test_is_file_exists_in_db():
+    """Tests the is_file_exists_in_db function gives the
     correct result when there is a file that does exist in
     the test database, when ther is a file that does not
     exist in the database, and when there is a database name
     given for a database that does not exist."""
     process_data(test_filename, test_db, decoded_dataframe, test_datatype)
-    answer = if_file_exists_in_db(test_db, test_filename)
+    answer = is_file_exists_in_db(test_db, test_filename)
     assert answer == True
-    answer2 = if_file_exists_in_db(test_db, "ThisFileDoesNotExist.csv")
+    answer2 = is_file_exists_in_db(test_db, "ThisFileDoesNotExist.csv")
     assert answer2 == False
-    assert if_file_exists_in_db("NotaRealDB.db", test_filename) == False
-    assert if_file_exists_in_db("NotaRealDB.db", "ThisFileDoesNotExist.csv") == False
+    assert is_file_exists_in_db("NotaRealDB.db", test_filename) == False
+    assert is_file_exists_in_db("NotaRealDB.db", "ThisFileDoesNotExist.csv") == False
     os.remove(test_db)
     return
 
