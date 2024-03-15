@@ -1,4 +1,5 @@
 import ast
+from typing import Dict, List
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -22,6 +23,10 @@ from diffcapanalyzer.databasewrappers import macc_chardis
 from diffcapanalyzer.databasefuncs import init_master_table
 from diffcapanalyzer.databasefuncs import get_file_from_database
 from diffcapanalyzer.chachifuncs import col_variables
+from diffcapanalyzer.dataframe_tools import (
+    expect_columns_of_dataframe,
+    rename_columns_of_dataframe,
+)
 from diffcapanalyzer.descriptors import generate_model
 
 
@@ -99,36 +104,32 @@ def decoded_to_dataframe(binary_data: bytes, datatype: str, file_name: str):
             "Discharge_Capacity(Ah)",
             "Step_Index",
         ]
-        assert all(item in list(data1.columns) for item in expected_cols)
+        expect_columns_of_dataframe(expected_cols, data1)
 
     elif datatype == "MACCOR":
         data1["MaccCharLab"] = data1.apply(lambda row: macc_chardis(row), axis=1)
         data1["Current(A)"] = data1["Current [A]"] * data1["MaccCharLab"]
         data1["datatype"] = "MACCOR"
+
         expected_cols = ["Cycle C", "Voltage [V]", "Current [A]", "Cap. [Ah]", "Md"]
-        assert all(item in list(data1.columns) for item in expected_cols)
-        data1.rename(
-            columns={
-                "Cycle C": "Cycle_Index",
-                "Voltage [V]": "Voltage(V)",
-                "Current [A]": "Abs_Current(A)",
-                "Cap. [Ah]": "Cap(Ah)",
-            },
-            inplace=True,
-        )
+        expect_columns_of_dataframe(expected_cols, data1)
+        columns_map = {
+            "Cycle C": "Cycle_Index",
+            "Voltage [V]": "Voltage(V)",
+            "Current [A]": "Abs_Current(A)",
+            "Cap. [Ah]": "Cap(Ah)",
+        }
+        rename_columns_of_dataframe(columns_map, data1)
 
     elif datatype == "FE-Neware":
         data1["datatype"] = "FE-Neware"
-        expected_cols = []  # Empty for now
-        map_to = []
-        assert all(item in list(data1.columns) for item in expected_cols)
-        data1.rename(
-            columns={item[0]: item[1] for item in zip(expected_cols, map_to)},
-            inplace=True,
-        )
+
+        # TODO (cshen): We should scale the input correctly here.
+        # By this time, raw capacity number and energy number are not scaled correctly within our processed data.
 
         print("Formatted as FE-Neware")
         print([item.title() for item in data1.columns])
+
     else:
         None
     return data1
