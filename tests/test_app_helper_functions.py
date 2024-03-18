@@ -10,25 +10,23 @@ from diffcapanalyzer.databasewrappers import process_data
 from diffcapanalyzer.databasewrappers import get_filename_pref
 
 
-test_db = 'tests/test_data/test_db.db'
-test_filename = 'tests/test_data/test_data.csv'
-test_datatype = 'ARBIN'
-test_filename_mac = 'tests/test_data/test_data_mac.csv'
-test_datatype_mac = 'MACCOR'
+test_db = "tests/test_data/test_db.db"
+test_filename = "tests/test_data/test_data.csv"
+test_datatype = "ARBIN"
+test_filename_mac = "tests/test_data/test_data_mac.csv"
+test_datatype_mac = "MACCOR"
 decoded_dataframe = decoded_to_dataframe(None, test_datatype, test_filename)
-decoded_dataframe_mac = decoded_to_dataframe(
-    None, test_datatype_mac, test_filename_mac)
+decoded_dataframe_mac = decoded_to_dataframe(None, test_datatype_mac, test_filename_mac)
 
 if os.path.exists(test_db):
     os.remove(test_db)
 
 
 def test_pop_with_db():
-    """test that the clean and raw dataframes are 
+    """test that the clean and raw dataframes are
     returned from this function from a file'"""
 
-    process_data(test_filename, test_db, decoded_dataframe,
-                 test_datatype)
+    process_data(test_filename, test_db, decoded_dataframe, test_datatype)
 
     df_clean, df_raw = pop_with_db(test_filename, test_db)
 
@@ -38,17 +36,16 @@ def test_pop_with_db():
     assert df_raw is not None
     assert type(df_raw) == pd.DataFrame
 
-    assert 'Smoothed_dQ/dV' in df_clean.columns
+    assert "Smoothed_dQ/dV" in df_clean.columns
     os.remove(test_db)
     return
 
 
 def test_pop_with_db_for_maccor():
-    """test that the clean and raw dataframes are 
+    """test that the clean and raw dataframes are
     returned from this function from a file'"""
 
-    process_data(test_filename_mac, test_db, decoded_dataframe_mac,
-                 test_datatype_mac)
+    process_data(test_filename_mac, test_db, decoded_dataframe_mac, test_datatype_mac)
 
     df_clean, df_raw = pop_with_db(test_filename_mac, test_db)
 
@@ -58,7 +55,7 @@ def test_pop_with_db_for_maccor():
     assert df_raw is not None
     assert type(df_raw) == pd.DataFrame
 
-    assert 'Smoothed_dQ/dV' in df_clean.columns
+    assert "Smoothed_dQ/dV" in df_clean.columns
     os.remove(test_db)
     return
 

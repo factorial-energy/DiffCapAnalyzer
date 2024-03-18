@@ -1,2 +1,12 @@
 __pycache__/
 .ipynb_checkpoints/
+
+# Python venv stuff
+.venv/**
+bin/**
+pyvenv.cfg
+
+dist/**
+
+include/**
+build/**
